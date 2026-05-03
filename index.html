@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Will you go out with me?</title>
+<style>
+  :root {
+    --bg1: #ffd1dc;
+    --bg2: #ffe5b4;
+    --accent: #ff4d6d;
+    --accent2: #ff8e53;
+    --ink: #3d2c3a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    background: linear-gradient(135deg, var(--bg1), var(--bg2));
+    overflow-x: hidden;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* Floating background hearts */
+  .heart {
+    position: fixed;
+    pointer-events: none;
+    user-select: none;
+    animation: float linear infinite;
+    color: rgba(255, 77, 109, 0.55);
+    z-index: 0;
+  }
+  @keyframes float {
+    from { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    to   { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 32px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  h1 { font-size: 28px; margin: 0 0 6px; font-weight: 800; }
+  h2 { font-size: 26px; margin: 8px 0 14px; }
+  p  { line-height: 1.55; }
+
+  /* Creator form */
+  form { display: grid; gap: 14px; text-align: left; }
+  label.field { font-size: 13px; font-weight: 700; color: #6b5664; display:block; margin-bottom:6px; }
+  input[type="text"], input[type="date"], input[type="time"], textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid rgba(255, 77, 109, 0.2);
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    background: white;
+    transition: border-color .15s;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { min-height: 70px; resize: vertical; }
+
+  .file-drop {
+    border: 2px dashed rgba(255, 77, 109, 0.45);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    background: rgba(255,255,255,0.55);
+    display: block;
+  }
+  .file-drop:hover, .file-drop.dragover {
+    background: rgba(255, 77, 109, 0.08);
+    border-color: var(--accent);
+  }
+  .file-drop input { display: none; }
+  .preview {
+    margin-top: 10px;
+    width: 130px;
+    height: 130px;
+    border-radius: 12px;
+    object-fit: cover;
+    display: none;
+  }
+  .preview.show { display: inline-block; }
+
+  button {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 14px 24px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    box-shadow: 0 8px 24px rgba(255, 77, 109, 0.45);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(255,77,109,0.55); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .link-output {
+    margin-top: 18px;
+    text-align: left;
+  }
+  .link-result {
+    margin-top: 8px;
+    padding: 12px;
+    background: #fff7f7;
+    border-radius: 12px;
+    word-break: break-all;
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    max-height: 110px;
+    overflow-y: auto;
+    border: 1px solid rgba(255,77,109,0.2);
+    color: #555;
+  }
+  .copy-btn {
+    margin-top: 10px;
+    background: white;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  .copy-btn:hover { background: rgba(255,77,109,0.06); }
+
+  .hint { font-size: 12px; color: #888; margin-top: 10px; }
+  .error { color: #c0392b; font-size: 14px; min-height: 1em; }
+
+  /* Viewer */
+  .girl-photo {
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 6px solid white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    animation: pulse 2.6s ease-in-out infinite;
+    margin-bottom: 18px;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
+  }
+  .ask {
+    font-size: 30px;
+    font-weight: 800;
+    margin: 4px 0 22px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.2;
+  }
+  .details {
+    background: rgba(255,255,255,0.75);
+    padding: 14px 18px;
+    border-radius: 14px;
+    margin-bottom: 18px;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .details .row {
+    display: flex; justify-content: space-between; gap: 14px;
+  }
+  .details .label { font-weight: 700; color: var(--accent); }
+  .note { font-style: italic; color: #6b5664; margin: 0 0 22px; }
+
+  .answer-buttons {
+    display: flex; gap: 14px; justify-content: center; align-items: center;
+    flex-wrap: wrap; min-height: 64px;
+  }
+  .btn-yes {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-size: 20px;
+    padding: 18px 40px;
+    box-shadow: 0 8px 24px rgba(255, 77, 109, 0.5);
+    animation: wiggle 3.5s ease-in-out infinite;
+  }
+  @keyframes wiggle {
+    0%, 92%, 100% { transform: rotate(0deg); }
+    94% { transform: rotate(-3deg); }
+    96% { transform: rotate(3deg); }
+    98% { transform: rotate(-2deg); }
+  }
+  .btn-yes:hover { transform: scale(1.08); animation: none; }
+  .btn-no {
+    background: white; color: #888;
+    border: 2px solid #ddd;
+    font-size: 16px;
+    padding: 14px 28px;
+    transition: transform .25s ease, left .25s ease, top .25s ease;
+  }
+
+  .confirmation { display: none; }
+  .confirmation.show { display: block; animation: bounceIn 0.6s ease; }
+  @keyframes bounceIn {
+    0%   { transform: scale(0.3); opacity: 0; }
+    50%  { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .check { font-size: 72px; margin-bottom: 8px; }
+
+  .confetti {
+    position: fixed; width: 10px; height: 10px;
+    pointer-events: none; z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ CREATOR ============ -->
+<div id="creator" class="card" hidden>
+  <h1>Make your invite ✨</h1>
+  <p style="margin-top:0; color:#7a6471;">Fill this in — you'll get a link to send her.</p>
+
+  <form id="creator-form" novalidate>
+    <div>
+      <label class="field" for="name">Her name</label>
+      <input type="text" id="name" required placeholder="e.g. Ana" autocomplete="off">
+    </div>
+
+    <div>
+      <label class="field">Her photo</label>
+      <label class="file-drop" id="drop-zone">
+        <input type="file" id="image" accept="image/*">
+        <div id="drop-text">Click or drag an image here</div>
+        <img id="preview" class="preview" alt="">
+      </label>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div>
+        <label class="field" for="date">Date</label>
+        <input type="date" id="date" required>
+      </div>
+      <div>
+        <label class="field" for="time">Time</label>
+        <input type="time" id="time" required>
+      </div>
+    </div>
+
+    <div>
+      <label class="field" for="place">Place</label>
+      <input type="text" id="place" required placeholder="e.g. Café Lou, 7th &amp; Main">
+    </div>
+
+    <div>
+      <label class="field" for="message">Sweet note (optional)</label>
+      <textarea id="message" placeholder="Anything you'd like to say..."></textarea>
+    </div>
+
+    <button type="submit" class="btn-primary">Generate link 💌</button>
+    <div id="creator-error" class="error"></div>
+  </form>
+
+  <div id="link-output" class="link-output" hidden>
+    <div style="font-weight:700;">Send her this link:</div>
+    <div class="link-result" id="link-result"></div>
+    <button type="button" class="copy-btn" id="copy-btn">Copy link</button>
+    <div class="hint">
+      The link is long because the photo is embedded. In a chat it shows as a normal preview card.
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEWER ============ -->
+<div id="viewer" class="card" hidden>
+  <img id="g-photo" class="girl-photo" alt="">
+  <div class="ask" id="g-ask"></div>
+  <div class="details">
+    <div class="row"><span class="label">When</span><span id="g-when"></span></div>
+    <div class="row"><span class="label">Where</span><span id="g-where"></span></div>
+  </div>
+  <p class="note" id="g-message" hidden></p>
+
+  <div class="answer-buttons" id="answer-buttons">
+    <button class="btn-yes" id="btn-yes">Yes! 💖</button>
+    <button class="btn-no" id="btn-no">No</button>
+  </div>
+
+  <div class="confirmation" id="confirmation">
+    <div class="check">💖</div>
+    <h2>Yay! It's a date!</h2>
+    <p>See you <span id="conf-when"></span> at <span id="conf-where"></span> 🌹</p>
+  </div>
+</div>
+
+<script>
+  // -------- Floating hearts background --------
+  (function spawnHearts() {
+    const symbols = ['💗','💖','💕','✨','🌸','🌷'];
+    for (let i = 0; i < 14; i++) {
+      const h = document.createElement('div');
+      h.className = 'heart';
+      h.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      h.style.left = (Math.random() * 100) + 'vw';
+      h.style.fontSize = (18 + Math.random() * 24) + 'px';
+      h.style.animationDuration = (10 + Math.random() * 14) + 's';
+      h.style.animationDelay = (Math.random() * 12) + 's';
+      document.body.appendChild(h);
+    }
+  })();
+
+  // -------- UTF-8 safe base64 helpers --------
+  function encodeData(obj) {
+    const json = JSON.stringify(obj);
+    const b64 = btoa(unescape(encodeURIComponent(json)));
+    return encodeURIComponent(b64);
+  }
+  function decodeData(str) {
+    const b64 = decodeURIComponent(str);
+    const json = decodeURIComponent(escape(atob(b64)));
+    return JSON.parse(json);
+  }
+
+  // -------- Mode switch --------
+  const hash = location.hash.slice(1);
+  if (hash) {
+    try { renderViewer(decodeData(hash)); }
+    catch (e) {
+      console.warn('Bad invite hash:', e);
+      document.getElementById('creator').hidden = false;
+    }
+  } else {
+    document.getElementById('creator').hidden = false;
+  }
+
+  // ============ CREATOR ============
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('image');
+  const preview = document.getElementById('preview');
+  const dropText = document.getElementById('drop-text');
+  let compressedImage = null;
+
+  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+  ['dragenter', 'dragover'].forEach(ev =>
+    dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('dragover'); })
+  );
+  ['dragleave', 'drop'].forEach(ev =>
+    dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('dragover'); })
+  );
+  dropZone.addEventListener('drop', e => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 560;
+        let { width, height } = img;
+        if (width > height && width > max) { height *= max / width; width = max; }
+        else if (height > max) { width *= max / height; height = max; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        compressedImage = canvas.toDataURL('image/jpeg', 0.75);
+        preview.src = compressedImage;
+        preview.classList.add('show');
+        dropText.textContent = file.name + '  ✓';
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  document.getElementById('creator-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const err = document.getElementById('creator-error');
+    err.textContent = '';
+
+    const name  = document.getElementById('name').value.trim();
+    const date  = document.getElementById('date').value;
+    const time  = document.getElementById('time').value;
+    const place = document.getElementById('place').value.trim();
+    const msg   = document.getElementById('message').value.trim();
+
+    if (!name)            { err.textContent = 'Please add her name.'; return; }
+    if (!compressedImage) { err.textContent = 'Please add a photo.'; return; }
+    if (!date || !time)   { err.textContent = 'Please pick a date and time.'; return; }
+    if (!place)           { err.textContent = 'Please add a place.'; return; }
+
+    const data = { n: name, d: date, t: time, p: place, m: msg, i: compressedImage };
+    const url = location.origin + location.pathname + '#' + encodeData(data);
+
+    document.getElementById('link-result').textContent = url;
+    document.getElementById('link-output').hidden = false;
+    document.getElementById('link-output').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  document.getElementById('copy-btn').addEventListener('click', async () => {
+    const url = document.getElementById('link-result').textContent;
+    const btn = document.getElementById('copy-btn');
+    try {
+      await navigator.clipboard.writeText(url);
+      const orig = btn.textContent;
+      btn.textContent = 'Copied! ✓';
+      setTimeout(() => btn.textContent = orig, 1500);
+    } catch {
+      // fallback: select text for manual copy
+      const range = document.createRange();
+      range.selectNodeContents(document.getElementById('link-result'));
+      const sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+      btn.textContent = 'Press ⌘C to copy';
+    }
+  });
+
+  // ============ VIEWER ============
+  function renderViewer(data) {
+    document.getElementById('viewer').hidden = false;
+    document.getElementById('g-photo').src = data.i;
+    document.getElementById('g-ask').textContent = `${data.n}, will you go out with me?`;
+    document.title = `For ${data.n} 💌`;
+
+    const when = formatWhen(data.d, data.t);
+    document.getElementById('g-when').textContent = when;
+    document.getElementById('g-where').textContent = data.p;
+    document.getElementById('conf-when').textContent = when;
+    document.getElementById('conf-where').textContent = data.p;
+    if (data.m) {
+      const m = document.getElementById('g-message');
+      m.textContent = '“' + data.m + '”';
+      m.hidden = false;
+    }
+    setupAnswers();
+  }
+
+  function formatWhen(d, t) {
+    if (!d) return '';
+    const dt = new Date(d + 'T' + (t || '19:00'));
+    if (isNaN(dt)) return d + (t ? ' at ' + t : '');
+    const dateStr = dt.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const timeStr = t ? dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '';
+    return timeStr ? `${dateStr} at ${timeStr}` : dateStr;
+  }
+
+  function setupAnswers() {
+    const yes = document.getElementById('btn-yes');
+    const no  = document.getElementById('btn-no');
+
+    // Runaway "No"
+    const flee = () => {
+      const pad = 16;
+      const w = Math.max(0, window.innerWidth  - no.offsetWidth  - pad * 2);
+      const h = Math.max(0, window.innerHeight - no.offsetHeight - pad * 2);
+      no.style.position = 'fixed';
+      no.style.left = (pad + Math.random() * w) + 'px';
+      no.style.top  = (pad + Math.random() * h) + 'px';
+    };
+    no.addEventListener('mouseenter', flee);
+    no.addEventListener('focus', flee);
+    no.addEventListener('touchstart', e => { e.preventDefault(); flee(); }, { passive: false });
+    // Even if she manages to click it, we keep it lighthearted
+    no.addEventListener('click', e => { e.preventDefault(); flee(); });
+
+    yes.addEventListener('click', () => {
+      confettiBurst();
+      document.getElementById('answer-buttons').style.display = 'none';
+      document.getElementById('confirmation').classList.add('show');
+      setTimeout(confettiBurst, 500);
+      setTimeout(confettiBurst, 1100);
+    });
+  }
+
+  function confettiBurst() {
+    const colors = ['#ff4d6d','#ff8e53','#ffd1dc','#ffe5b4','#ff6b9d','#ffffff','#ffc0cb'];
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    for (let i = 0; i < 70; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.left = cx + 'px';
+      c.style.top  = cy + 'px';
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(c);
+
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = 200 + Math.random() * 420;
+      const dx = Math.cos(angle) * velocity;
+      const dy = Math.sin(angle) * velocity;
+      const rot = Math.random() * 720 - 360;
+
+      c.animate(
+        [
+          { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+          { transform: `translate(${dx}px, ${dy + 420}px) rotate(${rot}deg)`, opacity: 0 }
+        ],
+        { duration: 1400 + Math.random() * 900, easing: 'cubic-bezier(.2,.6,.4,1)' }
+      ).onfinish = () => c.remove();
+    }
+  }
+</script>
+</body>
+</html>
