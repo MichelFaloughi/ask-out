@@ -141,6 +141,7 @@ if (creatorForm) {
     err.textContent = '';
 
     const name  = document.getElementById('name').value.trim();
+    const email = document.getElementById('creator-email').value.trim();
     const date  = document.getElementById('date').value;
     const time  = document.getElementById('time').value;
     const place = document.getElementById('place').value.trim();
@@ -158,7 +159,7 @@ if (creatorForm) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          invite: { n: name, d: date, t: time, p: place, m: msg, th: currentTheme, ...(ask && { a: ask }) },
+          invite: { n: name, d: date, t: time, p: place, m: msg, th: currentTheme, ...(ask && { a: ask }), ...(email && { email }) },
           imageDataUrl: compressedImage || null,
         }),
       });
@@ -270,6 +271,7 @@ function setupAnswers() {
   const arena = document.getElementById('answer-buttons');
   const yes = document.getElementById('btn-yes');
   const no  = document.getElementById('btn-no');
+  let noCount = 0;
 
   const PAD = 6;          // px gap from arena edge
   const STEP = 60;        // px per dodge
@@ -339,10 +341,11 @@ function setupAnswers() {
     }
   }
 
-  no.addEventListener('mouseenter', flee);
-  no.addEventListener('focus',      flee);
-  no.addEventListener('touchstart', e => { e.preventDefault(); flee(e); }, { passive: false });
-  no.addEventListener('click',      e => { e.preventDefault(); flee(e); });
+  function fleeAndCount(e) { noCount++; flee(e); }
+  no.addEventListener('mouseenter', fleeAndCount);
+  no.addEventListener('focus',      fleeAndCount);
+  no.addEventListener('touchstart', e => { e.preventDefault(); fleeAndCount(e); }, { passive: false });
+  no.addEventListener('click',      e => { e.preventDefault(); fleeAndCount(e); });
 
   // Keep the button in bounds if the window resizes mid-chase
   window.addEventListener('resize', placeNo);
@@ -353,6 +356,15 @@ function setupAnswers() {
     document.getElementById('confirmation').classList.add('show');
     setTimeout(confettiBurst, 500);
     setTimeout(confettiBurst, 1100);
+
+    // fire-and-forget notification — don't block the UI
+    if (window.__INVITE__?.id) {
+      fetch('/api/yes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: window.__INVITE__.id, noCount }),
+      }).catch(() => {});
+    }
   });
 }
 

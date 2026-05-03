@@ -22,8 +22,9 @@ module.exports = async (req, res) => {
   const proto = req.headers['x-forwarded-proto'] || 'http';
   const host = req.headers['host'];
   const photo = invite.photoData ? `${proto}://${host}/api/photo/${id}` : '';
-  // strip raw photoData from inline JSON, pass a URL instead
-  const { photoData: _, ...inviteForClient } = invite;
+  // strip sensitive fields from inline JSON; pass photo URL and id instead
+  const { photoData: _, email: __, ...inviteForClient } = invite;
+  inviteForClient.id = id;
   if (photo) inviteForClient.photoUrl = photo;
   const safeJson = JSON.stringify(inviteForClient).replace(/<\/script>/gi, '<\\/script>');
 
