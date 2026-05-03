@@ -5,14 +5,17 @@
 // ---------- Floating background hearts ----------
 (function spawnHearts() {
   const symbols = ['💗', '💖', '💕', '✨', '🌸', '🌷'];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 26; i++) {
     const h = document.createElement('div');
     h.className = 'heart';
     h.textContent = symbols[Math.floor(Math.random() * symbols.length)];
     h.style.left = (Math.random() * 100) + 'vw';
-    h.style.fontSize = (18 + Math.random() * 24) + 'px';
-    h.style.animationDuration = (10 + Math.random() * 14) + 's';
-    h.style.animationDelay = (Math.random() * 12) + 's';
+    h.style.fontSize = (18 + Math.random() * 28) + 'px';
+    h.style.animationDuration = (7 + Math.random() * 10) + 's';
+    // Negative delay so hearts start mid-animation — they're already
+    // floating when the page loads instead of waiting offscreen.
+    h.style.animationDelay = (-Math.random() * 14) + 's';
+    h.style.setProperty('--drift', (40 + Math.random() * 80) * (Math.random() < 0.5 ? -1 : 1) + 'px');
     document.body.appendChild(h);
   }
 })();
@@ -27,6 +30,18 @@ function decodeData(str) {
   const b64 = decodeURIComponent(str);
   const json = decodeURIComponent(escape(atob(b64)));
   return JSON.parse(json);
+}
+
+// ---------- Constants ----------
+const DEFAULT_ASK = 'will you go out with me?';
+
+// ---------- Themes ----------
+const THEMES = ['default', 'ocean', 'sunset', 'mint', 'lavender'];
+let currentTheme = 'default';
+function applyTheme(t) {
+  if (!THEMES.includes(t)) t = 'default';
+  currentTheme = t;
+  document.body.dataset.theme = t;
 }
 
 // ---------- Mode switch ----------
@@ -86,6 +101,28 @@ function handleFile(file) {
   reader.readAsDataURL(file);
 }
 
+// ---------- Ask phrase counter ----------
+const askInput = document.getElementById('ask-phrase');
+const askCount = document.getElementById('ask-count');
+if (askInput && askCount) {
+  askInput.addEventListener('input', () => {
+    askCount.textContent = askInput.value.length;
+  });
+}
+
+// ---------- Theme picker ----------
+const themePicker = document.getElementById('theme-picker');
+if (themePicker) {
+  themePicker.addEventListener('click', e => {
+    const btn = e.target.closest('.theme-swatch');
+    if (!btn) return;
+    applyTheme(btn.dataset.theme);
+    themePicker.querySelectorAll('.theme-swatch').forEach(b =>
+      b.classList.toggle('active', b === btn)
+    );
+  });
+}
+
 const creatorForm = document.getElementById('creator-form');
 if (creatorForm) {
   creatorForm.addEventListener('submit', e => {
@@ -98,13 +135,12 @@ if (creatorForm) {
     const time  = document.getElementById('time').value;
     const place = document.getElementById('place').value.trim();
     const msg   = document.getElementById('message').value.trim();
+    const ask   = document.getElementById('ask-phrase').value.trim();
 
-    if (!name)            { err.textContent = 'Please add her name.'; return; }
-    if (!compressedImage) { err.textContent = 'Please add a photo.'; return; }
-    if (!date || !time)   { err.textContent = 'Please pick a date and time.'; return; }
-    if (!place)           { err.textContent = 'Please add a place.'; return; }
+    if (!name) { err.textContent = 'Please add her name.'; return; }
 
-    const data = { n: name, d: date, t: time, p: place, m: msg, i: compressedImage };
+    const data = { n: name, d: date, t: time, p: place, m: msg, i: compressedImage, th: currentTheme };
+    if (ask) data.a = ask;
     const url = location.origin + location.pathname + '#' + encodeData(data);
 
     document.getElementById('link-result').textContent = url;
@@ -134,16 +170,45 @@ if (creatorForm) {
 //  VIEWER
 // =============================================================
 function renderViewer(data) {
+  applyTheme(data.th || 'default');
   document.getElementById('viewer').hidden = false;
-  document.getElementById('g-photo').src = data.i;
-  document.getElementById('g-ask').textContent = `${data.n}, will you go out with me?`;
+
+  const photo = document.getElementById('g-photo');
+  if (data.i) {
+    photo.src = data.i;
+  } else {
+    photo.hidden = true;
+  }
+
+  document.getElementById('g-ask').textContent = `${data.n}, ${data.a || DEFAULT_ASK}`;
   document.title = `For ${data.n} 💌`;
 
   const when = formatWhen(data.d, data.t);
-  document.getElementById('g-when').textContent = when;
-  document.getElementById('g-where').textContent = data.p;
-  document.getElementById('conf-when').textContent = when;
-  document.getElementById('conf-where').textContent = data.p;
+  const whenRow  = document.getElementById('g-when').parentElement;
+  const whereRow = document.getElementById('g-where').parentElement;
+  const details  = document.querySelector('#viewer .details');
+
+  if (when) {
+    document.getElementById('g-when').textContent = when;
+  } else {
+    whenRow.hidden = true;
+  }
+
+  if (data.p) {
+    document.getElementById('g-where').textContent = data.p;
+  } else {
+    whereRow.hidden = true;
+  }
+
+  if (!when && !data.p) details.hidden = true;
+
+  let confText = '';
+  if (when && data.p)      confText = `See you ${when} at ${data.p} 🌹`;
+  else if (when)           confText = `See you ${when} 🌹`;
+  else if (data.p)         confText = `See you at ${data.p} 🌹`;
+  else                     confText = `Can't wait! 🌹`;
+  document.getElementById('conf-text').textContent = confText;
+
   if (data.m) {
     const m = document.getElementById('g-message');
     m.textContent = '“' + data.m + '”';

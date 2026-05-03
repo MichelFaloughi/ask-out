@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Will you go out with me?</title>
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -15,7 +15,7 @@
 
   <form id="creator-form" novalidate>
     <div>
-      <label class="field" for="name">Her name</label>
+      <label class="field" for="name">Her name <span class="req">*</span></label>
       <input type="text" id="name" required placeholder="e.g. Ana" autocomplete="off">
     </div>
 
@@ -31,23 +31,64 @@
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
       <div>
         <label class="field" for="date">Date</label>
-        <input type="date" id="date" required>
+        <input type="date" id="date">
       </div>
       <div>
         <label class="field" for="time">Time</label>
-        <input type="time" id="time" required>
+        <input type="time" id="time">
       </div>
     </div>
 
     <div>
       <label class="field" for="place">Place</label>
-      <input type="text" id="place" required placeholder="e.g. Café Lou, 7th &amp; Main">
+      <input type="text" id="place" placeholder="e.g. Café Lou, 7th &amp; Main">
     </div>
 
     <div>
-      <label class="field" for="message">Sweet note (optional)</label>
+      <label class="field" for="message">Sweet note</label>
       <textarea id="message" placeholder="Anything you'd like to say..."></textarea>
     </div>
+
+    <details class="advanced">
+      <summary>Advanced settings ✨</summary>
+      <div class="advanced-body">
+        <div>
+          <label class="field" for="ask-phrase">
+            Ask phrase
+            <span class="counter"><span id="ask-count">0</span>/80</span>
+          </label>
+          <input type="text" id="ask-phrase" maxlength="80"
+                 placeholder="will you go out with me?" autocomplete="off">
+          <div class="hint" style="margin-top:4px;">Shown as: "{her name}, {ask phrase}"</div>
+        </div>
+
+        <div>
+          <label class="field">Theme</label>
+          <div class="theme-picker" id="theme-picker">
+            <button type="button" class="theme-swatch active" data-theme="default">
+              <span class="swatch-preview t-default"></span>
+              <span>Sweetheart</span>
+            </button>
+            <button type="button" class="theme-swatch" data-theme="ocean">
+              <span class="swatch-preview t-ocean"></span>
+              <span>Ocean</span>
+            </button>
+            <button type="button" class="theme-swatch" data-theme="sunset">
+              <span class="swatch-preview t-sunset"></span>
+              <span>Sunset</span>
+            </button>
+            <button type="button" class="theme-swatch" data-theme="mint">
+              <span class="swatch-preview t-mint"></span>
+              <span>Mint</span>
+            </button>
+            <button type="button" class="theme-swatch" data-theme="lavender">
+              <span class="swatch-preview t-lavender"></span>
+              <span>Lavender</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </details>
 
     <button type="submit" class="btn-primary">Generate link 💌</button>
     <div id="creator-error" class="error"></div>
@@ -81,10 +122,10 @@
   <div class="confirmation" id="confirmation">
     <div class="check">💖</div>
     <h2>Yay! It's a date!</h2>
-    <p>See you <span id="conf-when"></span> at <span id="conf-where"></span> 🌹</p>
+    <p id="conf-text"></p>
   </div>
 </div>
 
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

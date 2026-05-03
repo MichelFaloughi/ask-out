@@ -1,9 +1,47 @@
-:root {
+:root,
+[data-theme="default"] {
   --bg1: #ffd1dc;
   --bg2: #ffe5b4;
   --accent: #ff4d6d;
   --accent2: #ff8e53;
   --ink: #3d2c3a;
+  --heart: rgba(255, 77, 109, 0.55);
+}
+[data-theme="ocean"] {
+  --bg1: #a1c4fd;
+  --bg2: #c2e9fb;
+  --accent: #2e86de;
+  --accent2: #48dbfb;
+  --ink: #1e3a52;
+  --heart: rgba(46, 134, 222, 0.55);
+}
+[data-theme="sunset"] {
+  --bg1: #ffafbd;
+  --bg2: #ffc3a0;
+  --accent: #e84118;
+  --accent2: #fbc531;
+  --ink: #4a2c1f;
+  --heart: rgba(232, 65, 24, 0.55);
+}
+[data-theme="mint"] {
+  --bg1: #a8edea;
+  --bg2: #d4fc79;
+  --accent: #11998e;
+  --accent2: #38ef7d;
+  --ink: #1f3d35;
+  --heart: rgba(17, 153, 142, 0.55);
+}
+[data-theme="lavender"] {
+  --bg1: #d4b4f5;
+  --bg2: #fbc2eb;
+  --accent: #8e44ad;
+  --accent2: #c77dff;
+  --ink: #321a3f;
+  --heart: rgba(142, 68, 173, 0.55);
+}
+
+html, body {
+  transition: background-color .35s ease, color .35s ease;
 }
 
 * { box-sizing: border-box; }
@@ -29,15 +67,19 @@ body {
   position: fixed;
   pointer-events: none;
   user-select: none;
-  animation: float linear infinite;
-  color: rgba(255, 77, 109, 0.55);
+  animation: float ease-in-out infinite;
+  color: var(--heart);
   z-index: 0;
+  will-change: transform, opacity;
 }
 @keyframes float {
-  from { transform: translateY(110vh) rotate(0deg); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  to   { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+  0%   { transform: translate(0, 110vh) rotate(0deg) scale(.9);   opacity: 0; }
+  8%   { opacity: 1; }
+  25%  { transform: translate(calc(var(--drift, 0px) *  1), 75vh) rotate(90deg)  scale(1.05); }
+  50%  { transform: translate(calc(var(--drift, 0px) * -1), 50vh) rotate(180deg) scale(.95); }
+  75%  { transform: translate(calc(var(--drift, 0px) *  1), 25vh) rotate(270deg) scale(1.05); }
+  92%  { opacity: 1; }
+  100% { transform: translate(0, -15vh) rotate(360deg) scale(.9); opacity: 0; }
 }
 
 /* ---------- Card ---------- */
@@ -68,6 +110,13 @@ label.field {
   color: #6b5664;
   display: block;
   margin-bottom: 6px;
+}
+.req { color: #e63946; margin-left: 2px; }
+.counter {
+  float: right;
+  font-weight: 500;
+  color: #a89099;
+  font-size: 12px;
 }
 
 input[type="text"],
@@ -259,3 +308,71 @@ button {
   pointer-events: none;
   z-index: 100;
 }
+
+/* ---------- Advanced settings ---------- */
+details.advanced {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.55);
+}
+details.advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #6b5664;
+  font-size: 14px;
+  padding: 2px 0;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+details.advanced summary::-webkit-details-marker { display: none; }
+details.advanced summary::before {
+  content: '▸';
+  color: var(--accent);
+  font-size: 12px;
+  transition: transform .15s ease;
+  display: inline-block;
+}
+details.advanced[open] summary::before { transform: rotate(90deg); }
+.advanced-body { margin-top: 14px; display: grid; gap: 14px; }
+
+/* ---------- Theme picker ---------- */
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+}
+.theme-swatch {
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 8px 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #6b5664;
+  transition: border-color .15s, transform .12s, box-shadow .15s;
+}
+.theme-swatch:hover { transform: translateY(-2px); }
+.theme-swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.swatch-preview {
+  width: 100%;
+  height: 32px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+.swatch-preview.t-default  { background: linear-gradient(135deg, #ffd1dc, #ffe5b4); }
+.swatch-preview.t-ocean    { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
+.swatch-preview.t-sunset   { background: linear-gradient(135deg, #ffafbd, #ffc3a0); }
+.swatch-preview.t-mint     { background: linear-gradient(135deg, #a8edea, #d4fc79); }
+.swatch-preview.t-lavender { background: linear-gradient(135deg, #d4b4f5, #fbc2eb); }
