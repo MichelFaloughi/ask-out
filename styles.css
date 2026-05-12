@@ -143,6 +143,45 @@ textarea {
 input:focus, textarea:focus { outline: none; border-color: var(--accent); }
 textarea { min-height: 70px; resize: vertical; }
 
+.place-wrapper { position: relative; }
+.place-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 77, 109, 0.15);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 10;
+}
+.place-option {
+  display: block;
+  width: 100%;
+  background: white;
+  border: none;
+  text-align: left;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  border-radius: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background .12s;
+}
+.place-option:last-child { border-bottom: none; }
+.place-option:hover { background: rgba(255, 77, 109, 0.08); }
+.place-option-main { font-weight: 600; }
+.place-option-secondary {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+  font-weight: 400;
+}
+
 .file-drop {
   border: 2px dashed rgba(255, 77, 109, 0.45);
   border-radius: 12px;

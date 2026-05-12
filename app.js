@@ -111,31 +111,97 @@ function handleFile(file) {
   reader.readAsDataURL(file);
 }
 
-// ---------- Places autocomplete ----------
+// ---------- Places autocomplete (custom UI on Places REST API) ----------
 let selectedLat = null, selectedLng = null;
-let placeAcEl = null;
+const PLACES_API = 'https://places.googleapis.com/v1';
 
-window.initAutocomplete = async function() {
-  const originalInput = document.getElementById('place');
-  if (!originalInput) return;
-  const { PlaceAutocompleteElement } = await google.maps.importLibrary('places');
-  placeAcEl = new PlaceAutocompleteElement();
-  placeAcEl.style.cssText = 'width:100%; display:block;';
-  originalInput.parentNode.insertBefore(placeAcEl, originalInput);
-  originalInput.hidden = true;
+function setupPlaceAutocomplete() {
+  const input = document.getElementById('place');
+  if (!input || !window.__MAPS_KEY__) return;
 
-  placeAcEl.addEventListener('gmp-placeselect', async ({ place }) => {
-    await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
-    selectedLat = place.location.lat();
-    selectedLng = place.location.lng();
-    originalInput.value = place.displayName || place.formattedAddress || '';
-  });
+  const wrapper = document.createElement('div');
+  wrapper.className = 'place-wrapper';
+  input.parentNode.insertBefore(wrapper, input);
+  wrapper.appendChild(input);
 
-  placeAcEl.addEventListener('input', () => {
+  const dropdown = document.createElement('div');
+  dropdown.className = 'place-dropdown';
+  dropdown.hidden = true;
+  wrapper.appendChild(dropdown);
+
+  let debounceTimer = null;
+  let abortCtrl = null;
+
+  input.addEventListener('input', () => {
     selectedLat = null; selectedLng = null;
-    originalInput.value = '';
+    const query = input.value.trim();
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (abortCtrl) abortCtrl.abort();
+    if (!query) { dropdown.hidden = true; dropdown.innerHTML = ''; return; }
+    debounceTimer = setTimeout(async () => {
+      abortCtrl = new AbortController();
+      try {
+        const res = await fetch(`${PLACES_API}/places:autocomplete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': window.__MAPS_KEY__ },
+          body: JSON.stringify({ input: query }),
+          signal: abortCtrl.signal,
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        renderSuggestions(data.suggestions || [], dropdown, input);
+      } catch (e) { if (e.name !== 'AbortError') console.warn('autocomplete', e); }
+    }, 250);
   });
-};
+
+  document.addEventListener('click', e => {
+    if (!wrapper.contains(e.target)) dropdown.hidden = true;
+  });
+}
+
+function renderSuggestions(suggestions, dropdown, input) {
+  dropdown.innerHTML = '';
+  const items = suggestions.map(s => s.placePrediction).filter(Boolean);
+  if (items.length === 0) { dropdown.hidden = true; return; }
+  for (const p of items) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'place-option';
+    const main = document.createElement('div');
+    main.className = 'place-option-main';
+    main.textContent = p.structuredFormat?.mainText?.text || p.text?.text || '';
+    item.appendChild(main);
+    const secText = p.structuredFormat?.secondaryText?.text;
+    if (secText) {
+      const sec = document.createElement('div');
+      sec.className = 'place-option-secondary';
+      sec.textContent = secText;
+      item.appendChild(sec);
+    }
+    item.addEventListener('click', () => selectPlace(p, dropdown, input));
+    dropdown.appendChild(item);
+  }
+  dropdown.hidden = false;
+}
+
+async function selectPlace(prediction, dropdown, input) {
+  const name = prediction.structuredFormat?.mainText?.text || prediction.text?.text || '';
+  input.value = name;
+  dropdown.hidden = true;
+  try {
+    const res = await fetch(`${PLACES_API}/places/${prediction.placeId}`, {
+      headers: { 'X-Goog-Api-Key': window.__MAPS_KEY__, 'X-Goog-FieldMask': 'location' },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.location) {
+      selectedLat = data.location.latitude;
+      selectedLng = data.location.longitude;
+    }
+  } catch (e) { console.warn('place details', e); }
+}
+
+setupPlaceAutocomplete();
 
 // ---------- Dev prefill ----------
 if (document.getElementById('creator') && !document.getElementById('creator').hidden) {
@@ -176,7 +242,7 @@ if (creatorForm) {
     const email = document.getElementById('creator-email').value.trim();
     const date  = document.getElementById('date').value;
     const time  = document.getElementById('time').value;
-    const place = (placeAcEl ? (placeAcEl.value || document.getElementById('place').value) : document.getElementById('place').value).trim();
+    const place = document.getElementById('place').value.trim();
     const msg   = document.getElementById('message').value.trim();
     const ask   = document.getElementById('ask-phrase').value.trim();
 

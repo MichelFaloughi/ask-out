@@ -64,7 +64,7 @@ module.exports = async (req, res) => {
   </div>
 </div>
 <script>window.__INVITE__ = ${safeJson}; window.__MAPS_KEY__ = "${escHtml(MAPS_KEY)}";</script>
-<script src="/app.js?v=5"></script>
+<script src="/app.js?v=6"></script>
 </body>
 </html>`);
 };
